@@ -3,41 +3,32 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
-#
 from spack import *
 
 
 class PyPsyclone(PythonPackage):
-    """Code generation for the PSyKAl framework from the GungHo project,
-       as used by the LFRic model at the UK Met Office."""
+    '''Code parser and domain specific compiler for finite
+    difference/volume/element weather and climate models. Used in the
+    LFRic model at the UK Met Office.
 
+    '''
     homepage = "https://github.com/stfc/PSyclone"
-    url      = "https://github.com/stfc/PSyclone/archive/1.5.1.tar.gz"
+    url      = "https://github.com/stfc/PSyclone/archive/1.8.1.tar.gz"
     git      = "https://github.com/stfc/PSyclone.git"
 
-    version('develop', branch='master')
-    version('1.5.1', commit='eba7a097175b02f75dec70616cf267b7b3170d78')
+    maintainers = ['rupertford', 'arporter', 'sergisiso', 'hiker', 'TeranIvy']
 
-    depends_on('py-setuptools', type='build')
+    version('master', branch='master')
+    version('1.8.1', sha256='3ed264fe6e25a71e06ab8161f4b6f499d46e4d10dce3d930b6ef4f8b380ca2b8')
+    version('1.5.1', sha256='643f5b7a62dd3c16bd91955d6bce91cfe6fa26852825524882d04201643da79c')
+
+    depends_on('py-setuptools', type=('build', 'run'))
     depends_on('py-pyparsing', type=('build', 'run'))
+    depends_on('py-six', type=('build', 'run'))
+    depends_on('py-enum34', type=('build', 'run'))
+    depends_on('py-configparser', type=('build', 'run'))
 
-    # Test cases fail without compatible versions of py-fparser:
+    # PSyclone versions may require particular versions of fparser
+    depends_on('py-fparser@master', type=('build', 'run'), when='@master')
+    depends_on('py-fparser@0.0.10', type=('build', 'run'), when='@1.8.1')
     depends_on('py-fparser@0.0.5', type=('build', 'run'), when='@1.5.1')
-    depends_on('py-fparser', type=('build', 'run'), when='@1.5.2:')
-
-    # Dependencies only required for tests:
-    depends_on('py-numpy',  type='test')
-    depends_on('py-nose',   type='test')
-    depends_on('py-pytest', type='test')
-
-    @run_after('install')
-    @on_package_attributes(run_tests=True)
-    def check_build(self):
-        # Limit py.test to search inside the build tree:
-        touch('pytest.ini')
-        with working_dir('src'):
-            Executable('py.test')()
-
-    def setup_build_environment(self, env):
-        # Allow testing with installed executables:
-        env.prepend_path('PATH', self.prefix.bin)
